@@ -112,31 +112,28 @@ function getWeatherData(lat, lng) {
 server.get('/events', eventHandler);
 
 function Event(data) {
-  this.link = data.link;
-  this.name = data.name;
-  this.event_date = data.event_date;
-  this.summary = data.summary;
+  this.link = data.url;
+  this.name = data.title;
+  this.event_date = data.start_time;
+  this.summary = data.discreption;
 }
 function eventHandler(request, response) {
 //   let link = request.query['link'];
-  let lat = request.query['latitude'];
-  //   console.log(lat);
-  let lng = request.query['longitude'];
-  let city = request.query['city'];
+  let city = request.query.formatted_query;
   //   console.log(link);
-  getEventData(city ,lat ,lng)
+  getEventData(city)
     .then((data) => {
       response.status(200).send(data);
     });
 }
-function getEventData(city ,lat ,lng) {
-  const url = `http://api.eventful.com/json/events/search?app_key=${EVENTFUL_API_KEY}&q=${city}/${lat},${lng}&limit=20`;
+function getEventData(formatted_query) {
+  const url = `http://api.eventful.com/json/events/search?app_key=${EVENTFUL_API_KEY}&location=${formatted_query}`;
   console.log(url);
   return superagent.get(url)
     .then((data) => {
       let toConvertData = JSON.parse(data.text);
-      let event = toConvertData.body.events.event[0].description = new Event(data);
-      console.log(toConvertData.body.events.event[0].description);
+      let event = toConvertData.events.event.map((day) => new Event(day));
+    //   console.log(toConvertData.body.events.event[0].description);
       return event;
     });
 }
