@@ -136,7 +136,7 @@ function getEventData(city ,lat ,lng) {
     .then((data) => {
       let toConvertData = JSON.parse(data.text);
       let event = toConvertData.body.events.event[0].description = new Event(data);
-        console.log(dataConvert.body.events.event[0].description);
+      console.log(dataConvert.body.events.event[0].description);
       return event;
     });
 }
