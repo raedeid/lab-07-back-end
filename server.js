@@ -17,7 +17,7 @@ require('dotenv').config();
 const PORT = process.env.PORT || 3000;
 const GEOCODE_API_KEY = process.env.GEOCODE_API_KEY;
 const DARKSKY_API_KEY = process.env.DARKSKY_API_KEY;
-const EVENT_FUL_KEY = process.env.EVENT_FUL_KEY;
+const EVENTFUL_API_KEY = process.env.EVENTFUL_API_KEY;
 
 
 // Make the app listening
@@ -77,7 +77,7 @@ function Weather(day) {
 
 function weatherHandler(request, response) {
   let lat = request.query['latitude'];
-//   console.log(lat);
+  //   console.log(lat);
   let lng = request.query['longitude'];
   getWeatherData(lat, lng)
     .then((data) => {
@@ -109,30 +109,34 @@ function getWeatherData(lat, lng) {
 //     },
 //     ...
 //   ]
-server.get('/event', eventHandler);
+server.get('/events', eventHandler);
 
-function Event(link, name, event_date, summary) {
-  this.link = link;
-  this.name = name;
-  this.event_date = event_date;
-  this.summary = summary;
+function Event(data) {
+  this.link = data.link;
+  this.name = data.name;
+  this.event_date = data.event_date;
+  this.summary = data.summary;
 }
 function eventHandler(request, response) {
-  let link = request.query['link'];
-//   console.log(link);
-  getEventData(link)
+//   let link = request.query['link'];
+  let lat = request.query['latitude'];
+  //   console.log(lat);
+  let lng = request.query['longitude'];
+  let city = request.query['city'];
+  //   console.log(link);
+  getEventData(city ,lat ,lng)
     .then((data) => {
       response.status(200).send(data);
     });
 }
-function getEventData(link) {
-  const url = `http://api.eventful.com/json/events/search?app_key=${EVENT_FUL_KEY}&q=${link}&limit=1`;
-//   console.log(url);
+function getEventData(city ,lat ,lng) {
+  const url = `http://api.eventful.com/json/events/search?app_key=${EVENTFUL_API_KEY}&q=${city}/${lat},${lng}&limit=20`;
+  console.log(url);
   return superagent.get(url)
     .then((data) => {
-      let dataConvert = JSON.parse(data.text);
-      let event = dataConvert.body.events.event[0].description = new Event(city);
-    //   console.log(dataConvert.body.events.event[0].description);
+      let toConvertData = JSON.parse(data.text);
+      let event = toConvertData.body.events.event[0].description = new Event(data);
+        console.log(dataConvert.body.events.event[0].description);
       return event;
     });
 }
