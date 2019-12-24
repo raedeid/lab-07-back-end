@@ -141,8 +141,6 @@ function getEventData(city ,lat ,lng) {
     });
 }
 
-
-
 server.use('*', (request, response) => {
   response.status(404).send('Sorry, not found');
 });
