@@ -1,4 +1,4 @@
-'use strict';
+
 // Express
 const express = require('express');
 
@@ -17,7 +17,7 @@ require('dotenv').config();
 const PORT = process.env.PORT || 3000;
 const GEOCODE_API_KEY = process.env.GEOCODE_API_KEY;
 const DARKSKY_API_KEY = process.env.DARKSKY_API_KEY;
-const EVENT_FUL_KEY = process.env.EVENT_FUL_KEY;
+const EVENTFUL_API_KEY = process.env.EVENTFUL_API_KEY;
 
 
 // Make the app listening
@@ -26,7 +26,7 @@ server.listen(PORT, () => console.log('Listening at port 3000'));
 
 
 server.get('/', (request, response) => {
-    response.status(200).send('App is working CLAAAAASS');
+  response.status(200).send('App is working CLAAAAASS');
 });
 
 /* {
@@ -41,29 +41,29 @@ server.get('/', (request, response) => {
 server.get('/location', locationHandler);
 
 function Location(city, locationData) {
-    this.formatted_query = locationData[0].display_name;
-    this.latitude = locationData[0].lat;
-    this.longitude = locationData[0].lon;
-    this.search_query = city;
+  this.formatted_query = locationData[0].display_name;
+  this.latitude = locationData[0].lat;
+  this.longitude = locationData[0].lon;
+  this.search_query = city;
 }
 
 function locationHandler(request, response) {
-    // Read the city from the user (request) and respond
-    let city = request.query['city'];
-    getLocationData(city)
-        .then((data) => {
-            response.status(200).send(data);
-        });
+  // Read the city from the user (request) and respond
+  let city = request.query['city'];
+  getLocationData(city)
+    .then((data) => {
+      response.status(200).send(data);
+    });
 }
 function getLocationData(city) {
-    const url = `https://us1.locationiq.com/v1/search.php?key=${GEOCODE_API_KEY}&q=${city}&format=json&limit=1`;
+  const url = `https://us1.locationiq.com/v1/search.php?key=${GEOCODE_API_KEY}&q=${city}&format=json&limit=1`;
 
-    // Superagent
-    return superagent.get(url)
-        .then((data) => {
-            let location = new Location(city, data.body);
-            return location;
-        });
+  // Superagent
+  return superagent.get(url)
+    .then((data) => {
+      let location = new Location(city, data.body);
+      return location;
+    });
 }
 
 
@@ -71,29 +71,28 @@ function getLocationData(city) {
 server.get('/weather', weatherHandler);
 
 function Weather(day) {
-    this.time = new Date(day.time * 1000).toDateString();
-    this.forecast = day.summary;
+  this.time = new Date(day.time * 1000).toDateString();
+  this.forecast = day.summary;
 }
 
 function weatherHandler(request, response) {
-    let lat = request.query['latitude'];
-    console.log(lat)
-    let lng = request.query['longitude'];
-    getWeatherData(lat, lng)
-        .then((data) => {
-            response.status(200).send(data);
-        });
-
+  let lat = request.query['latitude'];
+  //   console.log(lat);
+  let lng = request.query['longitude'];
+  getWeatherData(lat, lng)
+    .then((data) => {
+      response.status(200).send(data);
+    });
 }
 
 function getWeatherData(lat, lng) {
-    const url = `https://api.darksky.net/forecast/${DARKSKY_API_KEY}/${lat},${lng}`;
-    return superagent.get(url)
-        .then((weatherData) => {
-            console.log(weatherData.body.daily.data);
-            let weather = weatherData.body.daily.data.map((day) => new Weather(day));
-            return weather;
-        });
+  const url = `https://api.darksky.net/forecast/${DARKSKY_API_KEY}/${lat},${lng}`;
+  return superagent.get(url)
+    .then((weatherData) => {
+      console.log(weatherData.body.daily.data);
+      let weather = weatherData.body.daily.data.map((day) => new Weather(day));
+      return weather;
+    });
 }
 // [
 //     {
@@ -110,40 +109,41 @@ function getWeatherData(lat, lng) {
 //     },
 //     ...
 //   ]
-function eventFulHandler(request, response) {
-    let city = request.query['city'];
-    console.log(city)
-    getEventData(city)
-        .then((data) => {
-            response.status(200).send(data);
-        });
-}
-function getEventData(city) {
-    const url = `http://api.eventful.com/json/events/search?app_key=${EVENT_FUL_KEY}&q=${city}&format=json&limit=1`;
-    console.log(url)
-    return superagent.get(url)
-        .then((element) => {
-            // console.log(element);
-            // let weather = weatherData.body.daily.data.map((day) => new Weather(day));
-            return element.text;
-        })
-}
-server.get('/eventful', eventFulHandler);
+server.get('/events', eventHandler);
 
-// function Event(event){
-//     this.link =;
-//     this.name =;
-//     this.event_date=;
-//     this.summary=;
-// }
-
+function Event(data) {
+  this.link = data.url;
+  this.name = data.title;
+  this.event_date = data.start_time;
+  this.summary = data.discreption;
+}
+function eventHandler(request, response) {
+//   let link = request.query['link'];
+  let city = request.query.formatted_query;
+  //   console.log(link);
+  getEventData(city)
+    .then((data) => {
+      response.status(200).send(data);
+    });
+}
+function getEventData(formatted_query) {
+  const url = `http://api.eventful.com/json/events/search?app_key=${EVENTFUL_API_KEY}&location=${formatted_query}`;
+  console.log(url);
+  return superagent.get(url)
+    .then((data) => {
+      let toConvertData = JSON.parse(data.text);
+      let event = toConvertData.events.event.map((day) => new Event(day));
+    //   console.log(toConvertData.body.events.event[0].description);
+      return event;
+    });
+}
 
 server.use('*', (request, response) => {
-    response.status(404).send('Sorry, not found');
+  response.status(404).send('Sorry, not found');
 });
 
 server.use((error, request, response) => {
-    response.status(500).send(error);
+  response.status(500).send(error);
 });
 
 
